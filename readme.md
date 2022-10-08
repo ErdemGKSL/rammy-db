@@ -17,7 +17,7 @@ const path = require("path");
 class Game { constructor(arg) { this.data = {}; for (let i in arg) { this.data[i] = arg[i] } }; toJSON() { return {...this.data} } }
 class User { constructor(arg) { this.data = {}; for (let i in arg) { this.data[i] = arg[i] } }; toJSON() { return {...this.data} } }
 
-const db = new RamDB({
+const model = new RamDB({
 	path: path.resolve(process.cwd(), "./data.json"),
 	timeout: 5000,
 	default: {

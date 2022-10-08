@@ -15,7 +15,6 @@ module.exports.RamDB = class RamDB {
     } catch (err) { console.error(err) };
     this.saveData = _.throttle(() => this.#saveData(), args.timeout > 100 ? args.timeout : 5000);
     this.saveData();
-    console.log({ d: this.data });
   }
 
   #saveData() {

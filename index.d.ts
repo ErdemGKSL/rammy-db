@@ -2,7 +2,7 @@ export class RamDB<Model> {
 
   data: Model;
 
-  constructor(ctx: { path: string, timeout: number, default: Model, customClasses: CustomClass<any>[] });
+  constructor(ctx: { path: string, timeout?: number, default: Model, customClasses: CustomClass<any>[] });
 
   saveData(): Promise<void>;
 

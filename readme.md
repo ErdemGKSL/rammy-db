@@ -24,7 +24,7 @@ const db = new RamDB({
 		/** @type {Game[]} */
 		games: [],
 		queueData: {
-      /** @type {string[]} */
+			/** @type {string[]} */
 			players: [],
 			size: 0
 		},

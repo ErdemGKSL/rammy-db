@@ -1,3 +1,6 @@
+
+![RammyDB Text](https://cdn.discordapp.com/attachments/887446333047312464/1028347470977191946/RammyLong.png "RammyDB Text")
+
 # RammyDB
 
 Stores data in disk and ram synchronously.

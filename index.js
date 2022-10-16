@@ -7,19 +7,24 @@ module.exports.RamDB = class RamDB {
     this.path = args.path;
     this.customClasses = Object.fromEntries(args.customClasses.map(cc => [cc.constructor?.name, cc]));
     this.data = args.default ?? [];
+    this.minify = args.minify ?? true;
     try {
-      this.data = JSON.parse(fs.readFileSync(this.path, "utf-8"), (k, v) => {
+      this.data = JSON.parse(fs.readFileSync(this.path, "utf-8"), (this.customClasses ? (k, v) => {
         if (v?.customClass && this.customClasses?.[v.customClass]) return new (this.customClasses[v.customClass])(v.data);
         return v;
-      });
+      } : undefined));
     } catch (err) { console.error(err) };
     this.saveData = _.throttle(() => this.#saveData(), args.timeout > 100 ? args.timeout : 5000);
     this.saveData();
+    if (args.autoSaveInterval > 1)
+      this.autoSaveInterval = setInterval(() => {
+        this.saveData();
+      }, args.autoSaveInterval)
   }
 
-  #saveData() {
-    let data = JSON.stringify(this.data, null, 2);
-    fs.writeFileSync(this.path, data);
+  async #saveData() {
+    let data = JSON.stringify(this.data, null, this.minify ? undefined : 2);
+    await fs.promises.writeFile(this.path, data);
   }
 
 };

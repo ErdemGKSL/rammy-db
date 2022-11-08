@@ -13,7 +13,7 @@ module.exports.RamDB = class RamDB {
         if (v?.customClass && this.customClasses?.[v.customClass]) return new (this.customClasses[v.customClass])(v.data);
         return v;
       } : undefined));
-    } catch (err) { console.error(err) };
+    } catch (err) {  };
     this.saveData = _.throttle(() => this.#saveData(), args.timeout > 100 ? args.timeout : 5000);
     this.saveData();
     if (args.autoSaveInterval > 1)

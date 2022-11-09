@@ -1,6 +1,6 @@
 {
   "name": "rammy-db",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Stores all data in ram and disk sync.",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/ErdemGKSL/rammy-db/issues"
   },
-  "homepage": "https://github.com/ErdemGKSL/rammy-db#readme"
+  "homepage": "https://github.com/ErdemGKSL/rammy-db#readme",
+  "dependencies": {
+    "stuffs": "^0.1.22"
+  }
 }

@@ -1,5 +1,6 @@
 const _ = require("lodash");
 const fs = require("fs");
+const { defaultify } = require("stuffs");
 
 module.exports.RamDB = class RamDB {
 
@@ -14,6 +15,7 @@ module.exports.RamDB = class RamDB {
         return v;
       } : undefined));
     } catch (err) {  };
+    this.data = defaultify(this.data, args.default ?? []);
     this.saveData = _.throttle(() => this.#saveData(), args.timeout > 100 ? args.timeout : 5000);
     this.saveData();
     if (args.autoSaveInterval > 1)

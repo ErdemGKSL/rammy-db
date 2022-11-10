@@ -225,7 +225,18 @@ module.exports.Ramoose = class Ramoose {
 
   deleteByData(data) {
     const index = this.#db.data.indexOf(data);
-    if (index !== -1) this.#db.data.splice(index, 1).length;
+    if (index !== -1) {
+      this.#db.data.splice(index, 1).length;
+      const keys = Object.keys(data);
+      for (let keysStr in this.indexes) {
+        const keysArr = keysStr.split("᠆☼᠆");
+        if (keysArr.every((k) => keys.includes(k))) {
+          const indexKey = keysArr.map(k => query[k]).join("᠆☼᠆");
+          if (!this.indexes[keysStr][indexKey]) continue;
+          this.indexes[keysStr][indexKey]?.delete(data);
+        }
+      }
+    }
     else return 0;
     this.#db.saveData();
     return 1;
@@ -236,7 +247,18 @@ module.exports.Ramoose = class Ramoose {
     if (!data) return null;
 
     const index = this.#db.data.indexOf(data);
-    if (index !== -1) this.#db.data.splice(index, 1);
+    if (index !== -1) {
+      this.#db.data.splice(index, 1);
+      const keys = Object.keys(data);
+      for (let keysStr in this.indexes) {
+        const keysArr = keysStr.split("᠆☼᠆");
+        if (keysArr.every((k) => keys.includes(k))) {
+          const indexKey = keysArr.map(k => query[k]).join("᠆☼᠆");
+          if (!this.indexes[keysStr][indexKey]) continue;
+          this.indexes[keysStr][indexKey]?.delete(data);
+        }
+      }
+    }
     else return 0;
 
     return data;
@@ -249,6 +271,16 @@ module.exports.Ramoose = class Ramoose {
     data.forEach(d => {
       const index = this.#db.data.indexOf(d);
       if (index !== -1) {
+        this.#db.data.splice(index, 1);
+        const keys = Object.keys(d);
+        for (let keysStr in this.indexes) {
+          const keysArr = keysStr.split("᠆☼᠆");
+          if (keysArr.every((k) => keys.includes(k))) {
+            const indexKey = keysArr.map(k => query[k]).join("᠆☼᠆");
+            if (!this.indexes[keysStr][indexKey]) continue;
+            this.indexes[keysStr][indexKey]?.delete(d);
+          }
+        }
         dSize++;
       }
     });

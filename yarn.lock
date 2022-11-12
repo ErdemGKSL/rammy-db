@@ -2,14 +2,19 @@
 # yarn lockfile v1
 
 
+lodash@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
+  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
+
 stuffs@^0.1.22:
   version "0.1.22"
-  resolved "https://registry.yarnpkg.com/stuffs/-/stuffs-0.1.22.tgz#799605e574cad8855fda40471cb5622e3ad6b02b"
+  resolved "https://registry.npmjs.org/stuffs/-/stuffs-0.1.22.tgz"
   integrity sha512-cWOwBCIbdSmFjZET+MZrd5tNW7yig/jXll1LZmtbhrWV6LJ0yYhD50uAAJhJO9/lU6OKr43nqDIetP2KWv3Fxg==
   dependencies:
     typescript "^4.8.4"
 
 typescript@^4.8.4:
   version "4.8.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.8.4.tgz#c464abca159669597be5f96b8943500b238e60e6"
+  resolved "https://registry.npmjs.org/typescript/-/typescript-4.8.4.tgz"
   integrity sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==

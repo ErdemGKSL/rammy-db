@@ -47,26 +47,26 @@ module.exports.toCustomClass = function toCustomClass(mClass) {
 
 module.exports.Ramoose = class Ramoose {
   #db;
-  #schema;
+  #scheme;
   #defaultObject;
   #indexList;
   /**
    * 
-   * @param {{ schema: {[k: string]: { index?: boolean, type: dataTypes, required?: boolean, unique?: true, default: any }}}} param0 
+   * @param {{ path: string, minify?: boolean, scheme: {[k: string]: { index?: boolean, type: dataTypes, required?: boolean, unique?: true, default: any }}}} param0 
    */
-  constructor({ path, minify, schema } = {}) {
+  constructor({ path, minify, scheme } = {}) {
 
-    for (let key in schema) {
-      if (typeof schema[key] === "string") schema[key] = { type: schema[key] };
+    for (let key in scheme) {
+      if (typeof scheme[key] === "string") scheme[key] = { type: scheme[key] };
     }
 
     console.warn("WARNING", "Ramoose is an experimantel feature.");
-    this.#schema = schema;
+    this.#scheme = scheme;
     this.#db = new module.exports.RamDB({ path, minify });
     this.#defaultObject = Object.fromEntries(
-      Object.entries(schema).filter(x => getType(x[1].default) === x[1].type).map(([k, v]) => [k, v.default])
+      Object.entries(scheme).filter(x => getType(x[1].default) === x[1].type).map(([k, v]) => [k, v.default])
     )
-    this.#indexList = Object.entries(schema).filter(x => typeof x[1] == "object" && (x[1].index || x[1].unique)).map((e) => e[0]);
+    this.#indexList = Object.entries(scheme).filter(x => typeof x[1] == "object" && (x[1].index || x[1].unique)).map((e) => e[0]);
     /** @type {{ [k: string]: { [k: string]: Set }}} */
     this.indexes = Object.fromEntries(
       getCombinations(this.#indexList)
@@ -110,8 +110,8 @@ module.exports.Ramoose = class Ramoose {
   findOne(query) {
 
     const allKeys = Object.keys(query).sort((a, b) => a > b ? 1 : -1);
-    const keys = allKeys.filter(k => getType(query[k]) === this.#schema[k]?.type);
-    const otherKeys = allKeys.filter(k => getType(query[k]) !== this.#schema[k]?.type && getType(query[k]) === "object");
+    const keys = allKeys.filter(k => getType(query[k]) === this.#scheme[k]?.type);
+    const otherKeys = allKeys.filter(k => getType(query[k]) !== this.#scheme[k]?.type && getType(query[k]) === "object");
     const keysAStr = keys.join("᠆☼᠆");
 
     if (this.indexes[keysAStr]) {
@@ -149,14 +149,14 @@ module.exports.Ramoose = class Ramoose {
         return otherKeys.every(k => {
           if (query[k].$in) {
             return d[k].includes(query[k].$in);
-          } else if (query[k].$gte) {
-            return query[k].$gte >= d[k];
-          } else if (query[k].$gt) {
-            return query[k].$gt > d[k];
           } else if (query[k].$lte) {
-            return query[k].$lte <= d[k];
+            return query[k].$lte >= d[k];
           } else if (query[k].$lt) {
-            return query[k].$lte < d[k];
+            return query[k].$lt > d[k];
+          } else if (query[k].$gte) {
+            return query[k].$gte <= d[k];
+          } else if (query[k].$gt) {
+            return query[k].$gte < d[k];
           }
         });
       }
@@ -165,11 +165,66 @@ module.exports.Ramoose = class Ramoose {
 
   }
 
+  updateOne(searchQuery, updateQuery, createIfNotExists = false) {
+
+    const data = this.findOne(searchQuery);
+
+    if (!data) {
+      if (createIfNotExists) return this.create({  ...searchQuery, ...updateQuery });
+      return;
+    };
+
+    // delete all indexes
+    {
+      const keys = Object.keys(data);
+      for (let keysStr in this.indexes) {
+        const keysArr = keysStr.split("᠆☼᠆");
+        if (keysArr.every((k) => keys.includes(k))) {
+          const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+          const _ref = this.indexes[keysStr];
+          if (!_ref[indexKey]) continue;
+          _ref[indexKey]?.delete(data);
+          if (_ref[indexKey]?.size === 0) delete _ref[indexKey];
+        }
+      }
+    }
+
+    for (let key in updateQuery) {
+      const updater = updateQuery[key];
+      if (this.#scheme[key].type == getType(updater)) data[key] = updater;
+      else if (getType(updater) === "object") {
+        if (updater.$push) {
+          data[key].push(
+            ...(Array.isArray(updater.$push) ? updater.$push : [updater.$push])
+          );
+        } else if (updater.$inc) {
+          data[key] += updater.$inc;
+        }
+      }
+    }
+
+    // create indexes
+    const keys = Object.keys(data).sort((a, b) => a > b ? 1 : -1);
+
+    for (let keysStr in this.indexes) {
+      const keysArr = keysStr.split("᠆☼᠆");
+      if (keysArr.every((k) => keys.includes(k))) {
+        const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+        const _ref = this.indexes[keysStr];
+        if (!_ref[indexKey]) _ref[indexKey] = new Set();
+        _ref[indexKey].add(data);
+      }
+    }
+
+    this.#db.saveData();
+
+  }
+
   findMany(query) {
 
     const allKeys = Object.keys(query).sort((a, b) => a > b ? 1 : -1);
-    const keys = allKeys.filter(k => getType(query[k]) === this.#schema[k]?.type);
-    const otherKeys = allKeys.filter(k => getType(query[k]) !== this.#schema[k]?.type && getType(query[k]) === "object");
+    const keys = allKeys.filter(k => getType(query[k]) === this.#scheme[k]?.type);
+    const otherKeys = allKeys.filter(k => getType(query[k]) !== this.#scheme[k]?.type && getType(query[k]) === "object");
     const keysAStr = keys.join("᠆☼᠆");
 
     if (this.indexes[keysAStr]) {
@@ -249,18 +304,22 @@ module.exports.Ramoose = class Ramoose {
     const index = this.#db.data.indexOf(data);
     if (index !== -1) {
       this.#db.data.splice(index, 1);
-      const keys = Object.keys(data);
-      for (let keysStr in this.indexes) {
-        const keysArr = keysStr.split("᠆☼᠆");
-        if (keysArr.every((k) => keys.includes(k))) {
-          const indexKey = keysArr.map(k => query[k]).join("᠆☼᠆");
-          if (!this.indexes[keysStr][indexKey]) continue;
-          this.indexes[keysStr][indexKey]?.delete(data);
+      {
+        const keys = Object.keys(data);
+        for (let keysStr in this.indexes) {
+          const keysArr = keysStr.split("᠆☼᠆");
+          if (keysArr.every((k) => keys.includes(k))) {
+            const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+            const _ref = this.indexes[keysStr];
+            if (!_ref[indexKey]) continue;
+            _ref[indexKey]?.delete(data);
+            if (_ref[indexKey]?.size === 0) delete _ref[indexKey];
+          }
         }
       }
     }
     else return 0;
-
+    this.#db.saveData();
     return data;
   }
 
@@ -272,18 +331,23 @@ module.exports.Ramoose = class Ramoose {
       const index = this.#db.data.indexOf(d);
       if (index !== -1) {
         this.#db.data.splice(index, 1);
-        const keys = Object.keys(d);
-        for (let keysStr in this.indexes) {
-          const keysArr = keysStr.split("᠆☼᠆");
-          if (keysArr.every((k) => keys.includes(k))) {
-            const indexKey = keysArr.map(k => query[k]).join("᠆☼᠆");
-            if (!this.indexes[keysStr][indexKey]) continue;
-            this.indexes[keysStr][indexKey]?.delete(d);
+        {
+          const keys = Object.keys(data);
+          for (let keysStr in this.indexes) {
+            const keysArr = keysStr.split("᠆☼᠆");
+            if (keysArr.every((k) => keys.includes(k))) {
+              const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+              const _ref = this.indexes[keysStr];
+              if (!_ref[indexKey]) continue;
+              _ref[indexKey]?.delete(data);
+              if (_ref[indexKey]?.size === 0) delete _ref[indexKey];
+            }
           }
         }
         dSize++;
       }
     });
+    if (dSize) this.#db.saveData();
     return dSize;
   };
 

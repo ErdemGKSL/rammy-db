@@ -46,7 +46,7 @@ module.exports.toCustomClass = function toCustomClass(mClass) {
 }
 
 module.exports.Ramoose = class Ramoose {
-  #db;
+  db;
   #scheme;
   #defaultObject;
   #indexList;
@@ -62,7 +62,7 @@ module.exports.Ramoose = class Ramoose {
 
     console.warn("WARNING", "Ramoose is an experimantel feature.");
     this.#scheme = scheme;
-    this.#db = new module.exports.RamDB({ path, minify });
+    this.db = new module.exports.RamDB({ path, minify });
     this.#defaultObject = Object.fromEntries(
       Object.entries(scheme).filter(x => getType(x[1].default) === x[1].type).map(([k, v]) => [k, v.default])
     )
@@ -76,7 +76,7 @@ module.exports.Ramoose = class Ramoose {
     this.#injectIndexes();
   }
   #injectIndexes() {
-    this.#db.data.forEach(/** @param {{k: string}: any } data */(data) => {
+    this.db.data.forEach(/** @param {{k: string}: any } data */(data) => {
       const keys = Object.keys(data).sort((a, b) => a > b ? 1 : -1)
       for (let keysStr in this.indexes) {
         const keysArr = keysStr.split("᠆☼᠆");
@@ -91,7 +91,7 @@ module.exports.Ramoose = class Ramoose {
 
   create(rData) {
     const data = defaultify(rData, this.#defaultObject);
-    this.#db.data.push(data);
+    this.db.data.push(data);
 
     const keys = Object.keys(data).sort((a, b) => a > b ? 1 : -1);
 
@@ -104,7 +104,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
 
-    this.#db.saveData();
+    this.db.saveData();
   }
 
   findOne(query) {
@@ -144,7 +144,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
 
-    return this.#db.data.find(d => {
+    return this.db.data.find(d => {
       if (keys.every(k => query[k] === d[k])) {
         return otherKeys.every(k => {
           if (query[k].$in) {
@@ -162,6 +162,62 @@ module.exports.Ramoose = class Ramoose {
       }
       return false;
     });
+
+  }
+
+  updateMany(searchQuery, updateQuery) {
+    
+    const dataa = this.findMany(searchQuery);
+
+    if (!dataa?.length) {
+      return;
+    };
+    for (let i = 0; i < dataa.length; i++ ) {
+      const data = dataa[i];
+      // delete all indexes
+      {
+        const keys = Object.keys(data);
+        for (let keysStr in this.indexes) {
+          const keysArr = keysStr.split("᠆☼᠆");
+          if (keysArr.every((k) => keys.includes(k))) {
+            const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+            const _ref = this.indexes[keysStr];
+            if (!_ref[indexKey]) continue;
+            _ref[indexKey]?.delete(data);
+            if (_ref[indexKey]?.size === 0) delete _ref[indexKey];
+          }
+        }
+      }
+  
+      for (let key in updateQuery) {
+        const updater = updateQuery[key];
+        if (this.#scheme[key].type == getType(updater)) data[key] = updater;
+        else if (getType(updater) === "object") {
+          if (updater.$push) {
+            data[key].push(
+              ...(Array.isArray(updater.$push) ? updater.$push : [updater.$push])
+            );
+          } else if (updater.$inc) {
+            data[key] += updater.$inc;
+          }
+        }
+      }
+  
+      // create indexes
+      const keys = Object.keys(data).sort((a, b) => a > b ? 1 : -1);
+  
+      for (let keysStr in this.indexes) {
+        const keysArr = keysStr.split("᠆☼᠆");
+        if (keysArr.every((k) => keys.includes(k))) {
+          const indexKey = keysArr.map(k => data[k]).join("᠆☼᠆");
+          const _ref = this.indexes[keysStr];
+          if (!_ref[indexKey]) _ref[indexKey] = new Set();
+          _ref[indexKey].add(data);
+        }
+      }
+    }
+
+    this.db.saveData();
 
   }
 
@@ -216,7 +272,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
 
-    this.#db.saveData();
+    this.db.saveData();
 
   }
 
@@ -257,7 +313,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
 
-    return this.#db.data.filter(d => {
+    return this.db.data.filter(d => {
       if (keys.every(k => query[k] === d[k])) {
         return otherKeys.every(k => {
           if (query[k].$in) {
@@ -279,9 +335,9 @@ module.exports.Ramoose = class Ramoose {
   }
 
   deleteByData(data) {
-    const index = this.#db.data.indexOf(data);
+    const index = this.db.data.indexOf(data);
     if (index !== -1) {
-      this.#db.data.splice(index, 1).length;
+      this.db.data.splice(index, 1).length;
       const keys = Object.keys(data);
       for (let keysStr in this.indexes) {
         const keysArr = keysStr.split("᠆☼᠆");
@@ -293,7 +349,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
     else return 0;
-    this.#db.saveData();
+    this.db.saveData();
     return 1;
   }
 
@@ -301,9 +357,9 @@ module.exports.Ramoose = class Ramoose {
     const data = this.findOne(query);
     if (!data) return null;
 
-    const index = this.#db.data.indexOf(data);
+    const index = this.db.data.indexOf(data);
     if (index !== -1) {
-      this.#db.data.splice(index, 1);
+      this.db.data.splice(index, 1);
       {
         const keys = Object.keys(data);
         for (let keysStr in this.indexes) {
@@ -319,7 +375,7 @@ module.exports.Ramoose = class Ramoose {
       }
     }
     else return 0;
-    this.#db.saveData();
+    this.db.saveData();
     return data;
   }
 
@@ -328,9 +384,9 @@ module.exports.Ramoose = class Ramoose {
     if (!data?.length) return null;
     let dSize = 0;
     data.forEach(d => {
-      const index = this.#db.data.indexOf(d);
+      const index = this.db.data.indexOf(d);
       if (index !== -1) {
-        this.#db.data.splice(index, 1);
+        this.db.data.splice(index, 1);
         {
           const keys = Object.keys(data);
           for (let keysStr in this.indexes) {
@@ -347,7 +403,7 @@ module.exports.Ramoose = class Ramoose {
         dSize++;
       }
     });
-    if (dSize) this.#db.saveData();
+    if (dSize) this.db.saveData();
     return dSize;
   };
 

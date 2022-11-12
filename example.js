@@ -7,12 +7,12 @@ const db = new Ramoose({
     xd: "string",
     userId: {
       required: true,
-      index: true,
+      // index: true,
       type: "string"
     },
     guildId: {
       required: true,
-      index: true,
+      // index: true,
       type: "string"
     },
     data: {
@@ -29,12 +29,18 @@ const db = new Ramoose({
   console.time("deleteOne")
 
   await db.deleteOne({
-    userId: "123",
+    userId: "1234",
     guildId: "321",
   });
   console.timeEnd("deleteOne")
-  console.time("create")
+  console.time("create");
 
+  for (let i = 0; i < 500; i++) {
+    db.create({
+      userId: Math.floor(Math.random() * 10000).toString(),
+      guildId: Math.floor(Math.random() * 3).toString(),
+    })
+  }
   await db.create({
     userId: "123",
     guildId: "321",
@@ -44,14 +50,12 @@ const db = new Ramoose({
   console.timeEnd("create")
 
 
-  console.time("findOne")
+  console.time("findMany")
 
-  let data = await db.findOne({
-    date: {
-      $gte: 900
-    }
+  let data = await db.findMany({
+    guildId: "2"
   });
-  console.timeEnd("findOne")
+  console.timeEnd("findMany")
 
   console.log(data);
   console.time("updateOne")
@@ -64,9 +68,9 @@ const db = new Ramoose({
   });
   console.timeEnd("updateOne")
 
-  for (let key in db.indexes) {
-    console.log(db.indexes[key])
-  }
+  // for (let key in db.indexes) {
+    // console.log(db.indexes)
+  // }
 
   data = await db.findOne({
     date: {
@@ -75,10 +79,10 @@ const db = new Ramoose({
   });
   console.time("deleteOne")
 
-  await db.deleteOne({
-    userId: "1234",
-    guildId: "321",
-  });
+  // await db.deleteMany({
+  //   userId: "1234",
+  //   guildId: "321",
+  // });
   console.timeEnd("deleteOne")
   console.log(data);
 
